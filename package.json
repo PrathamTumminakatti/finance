@@ -1,0 +1,14 @@
+{
+  "name": "ai-finance-system",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm start",
+    "ml": "cd ml-service && uvicorn app.main:app --reload",
+    "dev": "concurrently \"npm run server\" \"npm run ml\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
