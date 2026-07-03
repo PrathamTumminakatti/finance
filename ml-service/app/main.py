@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import spacy
+from app.forecast import generate_forecast
 
 app = FastAPI()
 
@@ -11,6 +12,9 @@ nlp = spacy.load("en_core_web_sm")
 class TransactionInput(BaseModel):
     description: str
     amount: float
+
+class ForecastRequest(BaseModel):
+    user_id: str
 
 # Basic keyword-based category mapping (will improve later)
 CATEGORY_KEYWORDS = {
@@ -55,3 +59,18 @@ def analyze_transaction(data: TransactionInput):
         "anomaly_type": anomaly_type,
         "is_recurring": False
     }
+@app.post("/forecast")
+def forecast_expenses(data: ForecastRequest):
+    try:
+        result = generate_forecast(data.user_id)
+
+        return {
+            "status": "success",
+            "forecast": result
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
