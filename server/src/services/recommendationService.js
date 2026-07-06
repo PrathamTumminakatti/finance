@@ -517,6 +517,95 @@ const collectFinancialData = async (userId) => {
     };
 
 };
+const detectSavingsOpportunities = (
+    topCategories
+) => {
+
+    const opportunities = [];
+
+    for (const category of topCategories) {
+
+        if (category.percentage > 15) {
+
+            const suggestedReduction =
+                Math.round(category.amount * 0.10);
+
+            opportunities.push({
+
+                category: category.category,
+
+                currentSpending: category.amount,
+
+                suggestedReduction,
+
+                potentialSavings: suggestedReduction
+
+            });
+
+        }
+
+    }
+
+    return opportunities;
+
+};
+const generateDashboardSummary = (
+    financialSummary,
+    forecast,
+    financialHealth,
+    topCategories
+) => {
+
+    return {
+
+        monthlyIncome:
+            Number(financialSummary.monthly_income),
+
+        totalExpenses:
+            Number(financialSummary.total_expenses),
+
+        disposableIncome:
+            Number(financialSummary.disposable_income),
+
+        forecastExpense:
+            Number(forecast.forecast.predicted_expense),
+
+        financialHealth,
+
+        topExpenseCategory:
+            topCategories.length > 0
+                ? topCategories[0]
+                : null
+
+    };
+
+};
+const getTopExpenseCategories = (
+    categorySpending,
+    totalExpenses
+) => {
+
+    return categorySpending
+        .map(category => ({
+
+            category: category.category,
+
+            amount: Number(category.total_spent),
+
+            percentage: Number(
+                (
+                    Number(category.total_spent) /
+                    totalExpenses
+                ) * 100
+            ).toFixed(1)
+
+        }))
+        .sort(
+            (a, b) => b.amount - a.amount
+        )
+        .slice(0, 5);
+
+};
 const runAnalyzers = (data) => {
 
     const forecastAnalysis =
@@ -588,9 +677,38 @@ export const generateRecommendations = async (userId) => {
             analysis.metrics
         );
 
+    const topCategories =
+        getTopExpenseCategories(
+            data.categorySpending,
+            Number(data.financialSummary.total_expenses)
+        );
+
+    const savingsOpportunities =
+        detectSavingsOpportunities(
+            topCategories
+        );
+
+    const dashboardSummary =
+        generateDashboardSummary(
+            data.financialSummary,
+            data.forecast,
+            financialHealth,
+            topCategories
+        );
+
     return {
 
-        ...data,
+        financialSummary:
+            data.financialSummary,
+
+        categorySpending:
+            data.categorySpending,
+
+        monthlyTrend:
+            data.monthlyTrend,
+
+        forecast:
+            data.forecast,
 
         recommendations:
             analysis.recommendations,
@@ -598,7 +716,13 @@ export const generateRecommendations = async (userId) => {
         metrics:
             analysis.metrics,
 
-        financialHealth
+        financialHealth,
+
+        topCategories,
+
+        savingsOpportunities,
+
+        dashboardSummary
 
     };
 
