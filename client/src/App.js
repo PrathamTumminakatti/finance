@@ -1,25 +1,61 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import Dashboard from "./pages/Dashboard";
+import Transactions from "./pages/Transactions";
+import Analytics from "./pages/Analytics";
+import Forecast from "./pages/Forecast";
+import Recommendations from "./pages/Recommendations";
+import FinancialHealth from "./pages/FinancialHealth";
+import Profile from "./pages/Profile";
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    return (
+        <BrowserRouter>
+            <Routes>
+
+                <Route
+                    path="/"
+                    element={<Navigate to="/dashboard" replace />}
+                />
+
+                <Route
+                    path="/dashboard"
+                    element={<Dashboard />}
+                />
+
+                <Route
+                    path="/transactions"
+                    element={<Transactions />}
+                />
+
+                <Route
+                    path="/analytics"
+                    element={<Analytics />}
+                />
+
+                <Route
+                    path="/forecast"
+                    element={<Forecast />}
+                />
+
+                <Route
+                    path="/recommendations"
+                    element={<Recommendations />}
+                />
+
+                <Route
+                    path="/financial-health"
+                    element={<FinancialHealth />}
+                />
+
+                <Route
+                    path="/profile"
+                    element={<Profile />}
+                />
+
+            </Routes>
+        </BrowserRouter>
+    );
 }
 
 export default App;
