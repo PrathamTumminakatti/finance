@@ -1,0 +1,47 @@
+.top-categories{
+
+    margin-top:35px;
+
+    background:white;
+
+    padding:25px;
+
+    border-radius:12px;
+
+    box-shadow:0 3px 10px rgba(0,0,0,.08);
+
+}
+
+.top-categories h2{
+
+    margin-bottom:20px;
+
+}
+
+.top-categories table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+.top-categories th{
+
+    text-align:left;
+
+    background:#2563eb;
+
+    color:white;
+
+    padding:12px;
+
+}
+
+.top-categories td{
+
+    padding:12px;
+
+    border-bottom:1px solid #e5e7eb;
+
+}

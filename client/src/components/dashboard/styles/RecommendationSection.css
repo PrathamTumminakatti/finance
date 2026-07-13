@@ -1,0 +1,49 @@
+.recommendation-section{
+
+    margin-top:35px;
+
+}
+
+.recommendation-section h2{
+
+    margin-bottom:20px;
+
+}
+
+.recommendation-card{
+
+    background:white;
+
+    padding:18px;
+
+    border-radius:10px;
+
+    margin-bottom:18px;
+
+    box-shadow:0 3px 10px rgba(0,0,0,.08);
+
+}
+
+.recommendation-card.warning{
+
+    border-left:6px solid #ef4444;
+
+}
+
+.recommendation-card.info{
+
+    border-left:6px solid #3b82f6;
+
+}
+
+.recommendation-card.success{
+
+    border-left:6px solid #22c55e;
+
+}
+
+.recommendation-card h3{
+
+    margin-bottom:10px;
+
+}
