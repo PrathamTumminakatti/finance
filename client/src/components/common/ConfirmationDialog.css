@@ -1,0 +1,91 @@
+.dialog-overlay{
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(0,0,0,.45);
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    z-index:9999;
+
+}
+
+.dialog-box{
+
+    background:white;
+
+    width:450px;
+
+    max-width:90%;
+
+    padding:30px;
+
+    border-radius:12px;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+
+}
+
+.dialog-box h2{
+
+    margin-top:0;
+
+    color:#111827;
+
+}
+
+.dialog-box p{
+
+    color:#4b5563;
+
+    line-height:1.6;
+
+    margin:20px 0;
+
+}
+
+.dialog-buttons{
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    gap:15px;
+
+}
+
+.cancel-btn{
+
+    padding:10px 18px;
+
+    border:none;
+
+    background:#d1d5db;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+}
+
+.confirm-btn{
+
+    padding:10px 18px;
+
+    border:none;
+
+    background:#2563eb;
+
+    color:white;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+}

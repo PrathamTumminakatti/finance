@@ -1,4 +1,7 @@
-import { processTransaction } from '../services/transactionService.js';
+import {
+    processTransaction,
+    fetchTransactions
+} from '../services/transactionService.js';
 
 export const addTransaction = async (req, res) => {
   try {
@@ -20,4 +23,28 @@ export const addTransaction = async (req, res) => {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
   }
+};
+export const getTransactions = async (req, res) => {
+
+    try {
+
+        const { userId } = req.params;
+
+        const transactions =
+            await fetchTransactions(userId);
+
+        res.status(200).json(transactions);
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            error: "Internal server error"
+        });
+
+    }
+
 };
