@@ -4,6 +4,7 @@ import transactionRoutes from './routes/transactionRoutes.js';
 import dotenv from 'dotenv';
 import forecastRoutes from './routes/forecastRoutes.js';
 import recommendationRoutes from './routes/recommendationRoutes.js';
+import analyticsRoutes from "./routes/analyticsRoutes.js";
 
 dotenv.config();
 
@@ -17,5 +18,9 @@ app.use('/api/forecast', forecastRoutes);
 app.use(
     '/api/recommendations',
     recommendationRoutes
+);
+app.use(
+    "/api/analytics",
+    analyticsRoutes
 );
 export default app;

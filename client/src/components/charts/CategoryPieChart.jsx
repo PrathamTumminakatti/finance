@@ -26,7 +26,7 @@ ChartJS.register(
 
 function CategoryPieChart({ categories }) {
 
-    const data = {
+    const chartData = {
 
         labels: (categories ?? []).map(
 
@@ -40,7 +40,15 @@ function CategoryPieChart({ categories }) {
 
                 data: (categories ?? []).map(
 
-                    item => item.amount
+                    item => Number(
+
+                        item.amount ??
+
+                        item.total_spent ??
+
+                        0
+
+                    )
 
                 ),
 
@@ -60,7 +68,9 @@ function CategoryPieChart({ categories }) {
 
                     "#84cc16"
 
-                ]
+                ],
+
+                borderWidth: 1
 
             }
 
@@ -74,7 +84,7 @@ function CategoryPieChart({ categories }) {
 
             <h2>Expense Distribution</h2>
 
-            <Pie data={data} />
+            <Pie data={chartData} />
 
         </div>
 
