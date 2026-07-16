@@ -1,304 +1,423 @@
-import {
-    getFinancialSummary,
-    getCategorySpending,
-    getMonthlySpendingTrend
-} from '../models/recommendationModel.js';
+    import {
+        getFinancialSummary,
+        getCategorySpending,
+        getMonthlySpendingTrend
+    } from '../models/recommendationModel.js';
 
-import { forecastExpenses } from './mlService.js';
+    import { forecastExpenses } from './mlService.js';
 
-/*
-|--------------------------------------------------------------------------
-| Financial Thresholds
-|--------------------------------------------------------------------------
-*/
+    /*
+    |--------------------------------------------------------------------------
+    | Financial Thresholds
+    |--------------------------------------------------------------------------
+    */
 
-const FORECAST_THRESHOLDS = {
+    const FORECAST_THRESHOLDS = {
 
-    HEALTHY: 70,
+        HEALTHY: 70,
 
-    MODERATE: 90
+        MODERATE: 90
 
-};
+    };
 
-const CATEGORY_LIMITS = {
+    const CATEGORY_LIMITS = {
 
-    Food: 30,
+        Food: 30,
 
-    "Bills & Utilities": 25,
+        "Bills & Utilities": 25,
 
-    Shopping: 10,
+        Shopping: 10,
 
-    Travel: 10,
+        Travel: 10,
 
-    Entertainment: 5,
+        Entertainment: 5,
 
-    Healthcare: 10,
+        Healthcare: 10,
 
-    Education: 10
+        Education: 10
 
-};
+    };
 
-/*
-    Analyze forecast data.
-*/
-const analyzeForecast = (
-    financialSummary,
-    forecast
-) => {
+    /*
+        Analyze forecast data.
+    */
+    const analyzeForecast = (
+        financialSummary,
+        forecast
+    ) => {
 
-    const recommendations = [];
+        const recommendations = [];
 
-    const monthlyIncome = Number(financialSummary.monthly_income);
+        const monthlyIncome =
+    Number(financialSummary.monthly_income) || 1;
 
-    const predictedExpense = Number(
-        forecast.forecast.predicted_expense
-    );
-
-    const expenseRatio =
-        (predictedExpense / monthlyIncome) * 100;
-
-    let forecastStatus = "healthy";
-
-    if (expenseRatio > FORECAST_THRESHOLDS.MODERATE) {
-
-        forecastStatus = "high";
-
-        recommendations.push({
-
-            type: "warning",
-
-            priority: "high",
-
-            category: "Forecast",
-
-            title: "Forecasted expenses are very high",
-
-            description:
-                `Your forecasted expenses are expected to consume ${expenseRatio.toFixed(1)}% of your monthly income.`,
-
-            recommendation:
-                "Reduce discretionary spending before next month begins.",
-
-            impact:
-                "Lower expenses will increase your projected disposable income."
-
-        });
-
-    }
-
-    else if (expenseRatio > FORECAST_THRESHOLDS.HEALTHY) {
-
-        forecastStatus = "moderate";
-
-        recommendations.push({
-
-            type: "info",
-
-            priority: "medium",
-
-            category: "Forecast",
-
-            title: "Forecasted expenses are increasing",
-
-            description:
-                `Your forecasted expenses are expected to consume ${expenseRatio.toFixed(1)}% of your monthly income.`,
-
-            recommendation:
-                "Monitor your spending and avoid unnecessary purchases.",
-
-            impact:
-                "Maintaining controlled spending will improve future savings."
-
-        });
-
-    }
-
-    else {
-
-        recommendations.push({
-
-            type: "success",
-
-            priority: "low",
-
-            category: "Forecast",
-
-            title: "Healthy expense forecast",
-
-            description:
-                `Your forecasted expenses are expected to consume only ${expenseRatio.toFixed(1)}% of your monthly income.`,
-
-            recommendation:
-                "Continue maintaining your current spending habits.",
-
-            impact:
-                "You are likely to maintain a healthy disposable income."
-
-        });
-
-    }
+        if (
+    !forecast ||
+    !forecast.forecast ||
+    forecast.forecast.predicted_expense == null
+) {
 
     return {
 
-        recommendations,
+        recommendations: [
+
+            {
+
+                type: "info",
+
+                priority: "low",
+
+                category: "Forecast",
+
+                title: "Forecast unavailable",
+
+                description:
+                    "Not enough transaction history to generate a forecast.",
+
+                recommendation:
+                    "Add more transactions to enable AI forecasting.",
+
+                impact:
+                    "Forecast insights will become available after sufficient spending history."
+
+            }
+
+        ],
 
         metrics: {
 
-            expenseRatio,
+            expenseRatio: 0,
 
-            forecastStatus
+            forecastStatus: "insufficient_data"
 
         }
 
     };
 
-};
+}
 
-/*
-    Analyze disposable income.
-*/
-const analyzeDisposableIncome = (
-    financialSummary
-) => {
+const predictedExpense = Number(
+    forecast.forecast.predicted_expense
+);
 
-    const recommendations = [];
+        const expenseRatio =
+            (predictedExpense / monthlyIncome) * 100;
 
-    const disposableIncome = Number(
-        financialSummary.disposable_income
-    );
+        let forecastStatus = "healthy";
 
-    const monthlyIncome = Number(
-        financialSummary.monthly_income
-    );
+        if (expenseRatio > FORECAST_THRESHOLDS.MODERATE) {
 
-    const savingsRatio =
-        (disposableIncome / monthlyIncome) * 100;
+            forecastStatus = "high";
 
-    let savingsStatus = "healthy";
+            recommendations.push({
 
-    if (savingsRatio < 10) {
+                type: "warning",
 
-        savingsStatus = "critical";
+                priority: "high",
 
-        recommendations.push({
+                category: "Forecast",
 
-            type: "warning",
+                title: "Forecasted expenses are very high",
 
-            priority: "high",
+                description:
+                    `Your forecasted expenses are expected to consume ${expenseRatio.toFixed(1)}% of your monthly income.`,
 
-            category: "Savings",
+                recommendation:
+                    "Reduce discretionary spending before next month begins.",
 
-            title: "Very Low Disposable Income",
+                impact:
+                    "Lower expenses will increase your projected disposable income."
 
-            description:
-                `Only ${savingsRatio.toFixed(1)}% of your income remains after expenses.`,
-
-            recommendation:
-                "Reduce discretionary spending and review recurring expenses.",
-
-            impact:
-                "Increasing disposable income improves financial stability."
-
-        });
-
-    }
-
-    else if (savingsRatio < 20) {
-
-        savingsStatus = "moderate";
-
-        recommendations.push({
-
-            type: "info",
-
-            priority: "medium",
-
-            category: "Savings",
-
-            title: "Disposable Income Can Be Improved",
-
-            description:
-                `Your disposable income is ${savingsRatio.toFixed(1)}% of your monthly income.`,
-
-            recommendation:
-                "Aim to increase monthly savings where possible.",
-
-            impact:
-                "Higher savings improve your financial resilience."
-
-        });
-
-    }
-
-    else {
-
-        recommendations.push({
-
-            type: "success",
-
-            priority: "low",
-
-            category: "Savings",
-
-            title: "Healthy Disposable Income",
-
-            description:
-                `Your disposable income is ${savingsRatio.toFixed(1)}% of your monthly income.`,
-
-            recommendation:
-                "Continue maintaining your current savings habit.",
-
-            impact:
-                "Healthy savings improve long-term financial security."
-
-        });
-
-    }
-
-    return {
-
-        recommendations,
-
-        metrics: {
-
-            savingsRatio,
-
-            savingsStatus
+            });
 
         }
 
+        else if (expenseRatio > FORECAST_THRESHOLDS.HEALTHY) {
+
+            forecastStatus = "moderate";
+
+            recommendations.push({
+
+                type: "info",
+
+                priority: "medium",
+
+                category: "Forecast",
+
+                title: "Forecasted expenses are increasing",
+
+                description:
+                    `Your forecasted expenses are expected to consume ${expenseRatio.toFixed(1)}% of your monthly income.`,
+
+                recommendation:
+                    "Monitor your spending and avoid unnecessary purchases.",
+
+                impact:
+                    "Maintaining controlled spending will improve future savings."
+
+            });
+
+        }
+
+        else {
+
+            recommendations.push({
+
+                type: "success",
+
+                priority: "low",
+
+                category: "Forecast",
+
+                title: "Healthy expense forecast",
+
+                description:
+                    `Your forecasted expenses are expected to consume only ${expenseRatio.toFixed(1)}% of your monthly income.`,
+
+                recommendation:
+                    "Continue maintaining your current spending habits.",
+
+                impact:
+                    "You are likely to maintain a healthy disposable income."
+
+            });
+
+        }
+
+        return {
+
+            recommendations,
+
+            metrics: {
+
+                expenseRatio,
+
+                forecastStatus
+
+            }
+
+        };
+
     };
 
-};
+    /*
+        Analyze disposable income.
+    */
+    const analyzeDisposableIncome = (
+        financialSummary
+    ) => {
 
-/*
-    Analyze category-wise budgets.
-*/
-const analyzeCategoryBudgets = (
-    categorySpending,
-    financialSummary
-) => {
+        const recommendations = [];
 
-    const recommendations = [];
+        const disposableIncome = Number(
+            financialSummary.disposable_income
+        );
 
-    const totalExpenses =
-        Number(financialSummary.total_expenses);
+        const monthlyIncome = Number(
+            financialSummary.monthly_income
+        );
 
-    for (const category of categorySpending) {
+        const savingsRatio =
+            (disposableIncome / monthlyIncome) * 100;
 
-        const spent =
-            Number(category.total_spent);
+        let savingsStatus = "healthy";
 
-        const percentage =
-            (spent / totalExpenses) * 100;
+        if (savingsRatio < 10) {
 
-        const limit =
-            CATEGORY_LIMITS[category.category];
+            savingsStatus = "critical";
 
-        if (!limit)
-            continue;
+            recommendations.push({
 
-        if (percentage > limit) {
+                type: "warning",
+
+                priority: "high",
+
+                category: "Savings",
+
+                title: "Very Low Disposable Income",
+
+                description:
+                    `Only ${savingsRatio.toFixed(1)}% of your income remains after expenses.`,
+
+                recommendation:
+                    "Reduce discretionary spending and review recurring expenses.",
+
+                impact:
+                    "Increasing disposable income improves financial stability."
+
+            });
+
+        }
+
+        else if (savingsRatio < 20) {
+
+            savingsStatus = "moderate";
+
+            recommendations.push({
+
+                type: "info",
+
+                priority: "medium",
+
+                category: "Savings",
+
+                title: "Disposable Income Can Be Improved",
+
+                description:
+                    `Your disposable income is ${savingsRatio.toFixed(1)}% of your monthly income.`,
+
+                recommendation:
+                    "Aim to increase monthly savings where possible.",
+
+                impact:
+                    "Higher savings improve your financial resilience."
+
+            });
+
+        }
+
+        else {
+
+            recommendations.push({
+
+                type: "success",
+
+                priority: "low",
+
+                category: "Savings",
+
+                title: "Healthy Disposable Income",
+
+                description:
+                    `Your disposable income is ${savingsRatio.toFixed(1)}% of your monthly income.`,
+
+                recommendation:
+                    "Continue maintaining your current savings habit.",
+
+                impact:
+                    "Healthy savings improve long-term financial security."
+
+            });
+
+        }
+
+        return {
+
+            recommendations,
+
+            metrics: {
+
+                savingsRatio,
+
+                savingsStatus
+
+            }
+
+        };
+
+    };
+
+    /*
+        Analyze category-wise budgets.
+    */
+    const analyzeCategoryBudgets = (
+        categorySpending,
+        financialSummary
+    ) => {
+
+        const recommendations = [];
+
+        const totalExpenses =
+            Number(financialSummary.total_expenses);
+
+        for (const category of categorySpending) {
+
+            const spent =
+                Number(category.total_spent);
+
+            const percentage =
+                (spent / totalExpenses) * 100;
+
+            const limit =
+                CATEGORY_LIMITS[category.category];
+
+            if (!limit)
+                continue;
+
+            if (percentage > limit) {
+
+                recommendations.push({
+
+                    type: "warning",
+
+                    priority: "medium",
+
+                    category: category.category,
+
+                    title:
+                        `${category.category} spending exceeds the recommended limit`,
+
+                    description:
+                        `${percentage.toFixed(1)}% of your expenses are allocated to ${category.category}.`,
+
+                    recommendation:
+                        `Try reducing ${category.category} spending.`,
+
+                    impact:
+                        "Better category balance improves your monthly savings."
+
+                });
+
+            }
+
+        }
+
+        return {
+
+            recommendations,
+
+            metrics: {}
+
+        };
+
+    };
+
+    /*
+        Analyze monthly spending trends.
+    */
+    const analyzeMonthlyTrend = (
+        monthlyTrend
+    ) => {
+
+        const recommendations = [];
+
+        if (monthlyTrend.length < 2) {
+
+            return {
+                recommendations,
+                metrics: {
+                    trend: "insufficient_data"
+                }
+            };
+
+        }
+
+        const currentMonth =
+            Number(monthlyTrend[monthlyTrend.length - 1].total_expense);
+
+        const previousMonth =
+            Number(monthlyTrend[monthlyTrend.length - 2].total_expense);
+
+        const difference = currentMonth - previousMonth;
+
+        const percentageChange =
+            (difference / previousMonth) * 100;
+
+        let trend = "stable";
+
+        if (percentageChange > 10) {
+
+            trend = "increasing";
 
             recommendations.push({
 
@@ -306,424 +425,360 @@ const analyzeCategoryBudgets = (
 
                 priority: "medium",
 
-                category: category.category,
+                category: "Trend",
 
-                title:
-                    `${category.category} spending exceeds the recommended limit`,
+                title: "Monthly spending is increasing",
 
                 description:
-                    `${percentage.toFixed(1)}% of your expenses are allocated to ${category.category}.`,
+                    `Your spending increased by ${percentageChange.toFixed(1)}% compared to last month.`,
 
                 recommendation:
-                    `Try reducing ${category.category} spending.`,
+                    "Review recent expenses and reduce unnecessary purchases.",
 
                 impact:
-                    "Better category balance improves your monthly savings."
+                    "Controlling spending growth will improve future savings."
+
+            });
+
+        }
+        else if (percentageChange < -10) {
+
+            trend = "decreasing";
+
+            recommendations.push({
+
+                type: "success",
+
+                priority: "low",
+
+                category: "Trend",
+
+                title: "Monthly spending is decreasing",
+
+                description:
+                    `Your spending decreased by ${Math.abs(percentageChange).toFixed(1)}% compared to last month.`,
+
+                recommendation:
+                    "Continue maintaining disciplined spending habits.",
+
+                impact:
+                    "Lower spending supports long-term financial stability."
 
             });
 
         }
 
-    }
+        return {
 
-    return {
+            recommendations,
 
-        recommendations,
+            metrics: {
 
-        metrics: {}
+                trend,
+
+                percentageChange
+
+            }
+
+        };
 
     };
 
-};
+    /*
+        Calculate overall financial health score.
+    */
+    const calculateFinancialHealthScore = (
+        metrics
+    ) => {
 
-/*
-    Analyze monthly spending trends.
-*/
-const analyzeMonthlyTrend = (
-    monthlyTrend
-) => {
+        let score = 100;
+        if (
+    metrics.forecast.forecastStatus ===
+    "insufficient_data"
+) {
 
-    const recommendations = [];
+    score -= 0;
 
-    if (monthlyTrend.length < 2) {
+}
+        if (
+            metrics.forecast.forecastStatus === "high"
+        ) {
+            score -= 30;
+        }
+        else if (
+            metrics.forecast.forecastStatus === "moderate"
+        ) {
+            score -= 15;
+        }
+
+        if (
+            metrics.disposableIncome.savingsStatus === "critical"
+        ) {
+            score -= 30;
+        }
+        else if (
+            metrics.disposableIncome.savingsStatus === "moderate"
+        ) {
+            score -= 15;
+        }
+
+        if (
+            metrics.monthlyTrend.trend === "increasing"
+        ) {
+            score -= 10;
+        }
+
+        score = Math.max(0, score);
+
+        let status = "Excellent";
+
+        if (score < 40)
+            status = "Poor";
+        else if (score < 60)
+            status = "Average";
+        else if (score < 80)
+            status = "Good";
 
         return {
-            recommendations,
-            metrics: {
-                trend: "insufficient_data"
-            }
+
+            score,
+
+            status
+
         };
 
-    }
+    };
+    const collectFinancialData = async (userId) => {
 
-    const currentMonth =
-        Number(monthlyTrend[monthlyTrend.length - 1].total_expense);
+        const financialSummary =
+            await getFinancialSummary(userId);
 
-    const previousMonth =
-        Number(monthlyTrend[monthlyTrend.length - 2].total_expense);
+        const categorySpending =
+            await getCategorySpending(userId);
 
-    const difference = currentMonth - previousMonth;
+        const monthlyTrend =
+            await getMonthlySpendingTrend(userId);
 
-    const percentageChange =
-        (difference / previousMonth) * 100;
+        const forecast =
+            await forecastExpenses(userId);
 
-    let trend = "stable";
+        return {
+            financialSummary,
+            categorySpending,
+            monthlyTrend,
+            forecast
+        };
 
-    if (percentageChange > 10) {
+    };
+    const detectSavingsOpportunities = (
+        topCategories
+    ) => {
 
-        trend = "increasing";
+        const opportunities = [];
 
-        recommendations.push({
+        for (const category of topCategories) {
 
-            type: "warning",
+            if (category.percentage > 15) {
 
-            priority: "medium",
+                const suggestedReduction =
+                    Math.round(category.amount * 0.10);
 
-            category: "Trend",
+                opportunities.push({
 
-            title: "Monthly spending is increasing",
+                    category: category.category,
 
-            description:
-                `Your spending increased by ${percentageChange.toFixed(1)}% compared to last month.`,
+                    currentSpending: category.amount,
 
-            recommendation:
-                "Review recent expenses and reduce unnecessary purchases.",
+                    suggestedReduction,
 
-            impact:
-                "Controlling spending growth will improve future savings."
+                    potentialSavings: suggestedReduction
 
-        });
+                });
 
-    }
-    else if (percentageChange < -10) {
-
-        trend = "decreasing";
-
-        recommendations.push({
-
-            type: "success",
-
-            priority: "low",
-
-            category: "Trend",
-
-            title: "Monthly spending is decreasing",
-
-            description:
-                `Your spending decreased by ${Math.abs(percentageChange).toFixed(1)}% compared to last month.`,
-
-            recommendation:
-                "Continue maintaining disciplined spending habits.",
-
-            impact:
-                "Lower spending supports long-term financial stability."
-
-        });
-
-    }
-
-    return {
-
-        recommendations,
-
-        metrics: {
-
-            trend,
-
-            percentageChange
+            }
 
         }
 
-    };
-
-};
-
-/*
-    Calculate overall financial health score.
-*/
-const calculateFinancialHealthScore = (
-    metrics
-) => {
-
-    let score = 100;
-
-    if (
-        metrics.forecast.forecastStatus === "high"
-    ) {
-        score -= 30;
-    }
-    else if (
-        metrics.forecast.forecastStatus === "moderate"
-    ) {
-        score -= 15;
-    }
-
-    if (
-        metrics.disposableIncome.savingsStatus === "critical"
-    ) {
-        score -= 30;
-    }
-    else if (
-        metrics.disposableIncome.savingsStatus === "moderate"
-    ) {
-        score -= 15;
-    }
-
-    if (
-        metrics.monthlyTrend.trend === "increasing"
-    ) {
-        score -= 10;
-    }
-
-    score = Math.max(0, score);
-
-    let status = "Excellent";
-
-    if (score < 40)
-        status = "Poor";
-    else if (score < 60)
-        status = "Average";
-    else if (score < 80)
-        status = "Good";
-
-    return {
-
-        score,
-
-        status
+        return opportunities;
 
     };
-
-};
-const collectFinancialData = async (userId) => {
-
-    const financialSummary =
-        await getFinancialSummary(userId);
-
-    const categorySpending =
-        await getCategorySpending(userId);
-
-    const monthlyTrend =
-        await getMonthlySpendingTrend(userId);
-
-    const forecast =
-        await forecastExpenses(userId);
-
-    return {
+    const generateDashboardSummary = (
         financialSummary,
-        categorySpending,
-        monthlyTrend,
-        forecast
+        forecast,
+        financialHealth,
+        topCategories
+    ) => {
+
+        return {
+
+            monthlyIncome:
+                Number(financialSummary.monthly_income),
+
+            totalExpenses:
+                Number(financialSummary.total_expenses),
+
+            disposableIncome:
+                Number(financialSummary.disposable_income),
+
+            forecastExpense:
+    Number(
+        forecast?.forecast?.predicted_expense ?? 0
+    ),
+
+            financialHealth,
+
+            topExpenseCategory:
+                topCategories.length > 0
+                    ? topCategories[0]
+                    : null
+
+        };
+
     };
+    const getTopExpenseCategories = (
+        categorySpending,
+        totalExpenses
+    ) => {
 
-};
-const detectSavingsOpportunities = (
-    topCategories
-) => {
-
-    const opportunities = [];
-
-    for (const category of topCategories) {
-
-        if (category.percentage > 15) {
-
-            const suggestedReduction =
-                Math.round(category.amount * 0.10);
-
-            opportunities.push({
+        return categorySpending
+            .map(category => ({
 
                 category: category.category,
 
-                currentSpending: category.amount,
+                amount: Number(category.total_spent),
 
-                suggestedReduction,
+                percentage: Number(
+                    (
+                        Number(category.total_spent) /
+                        totalExpenses
+                    ) * 100
+                ).toFixed(1)
 
-                potentialSavings: suggestedReduction
+            }))
+            .sort(
+                (a, b) => b.amount - a.amount
+            )
+            .slice(0, 5);
 
-            });
+    };
+    const runAnalyzers = (data) => {
 
-        }
+        const forecastAnalysis =
+            analyzeForecast(
+                data.financialSummary,
+                data.forecast
+            );
 
-    }
+        const disposableIncomeAnalysis =
+            analyzeDisposableIncome(
+                data.financialSummary
+            );
 
-    return opportunities;
+        const categoryBudgetAnalysis =
+            analyzeCategoryBudgets(
+                data.categorySpending,
+                data.financialSummary
+            );
 
-};
-const generateDashboardSummary = (
-    financialSummary,
-    forecast,
-    financialHealth,
-    topCategories
-) => {
+        const monthlyTrendAnalysis =
+            analyzeMonthlyTrend(
+                data.monthlyTrend
+            );
 
-    return {
+        return {
 
-        monthlyIncome:
-            Number(financialSummary.monthly_income),
+            recommendations: [
 
-        totalExpenses:
-            Number(financialSummary.total_expenses),
+                ...forecastAnalysis.recommendations,
 
-        disposableIncome:
-            Number(financialSummary.disposable_income),
+                ...disposableIncomeAnalysis.recommendations,
 
-        forecastExpense:
-            Number(forecast.forecast.predicted_expense),
+                ...categoryBudgetAnalysis.recommendations,
 
-        financialHealth,
+                ...monthlyTrendAnalysis.recommendations
 
-        topExpenseCategory:
-            topCategories.length > 0
-                ? topCategories[0]
-                : null
+            ],
+
+            metrics: {
+
+                forecast:
+                    forecastAnalysis.metrics,
+
+                disposableIncome:
+                    disposableIncomeAnalysis.metrics,
+
+                categoryBudgets:
+                    categoryBudgetAnalysis.metrics,
+
+                monthlyTrend:
+                    monthlyTrendAnalysis.metrics
+
+            }
+
+        };
 
     };
 
-};
-const getTopExpenseCategories = (
-    categorySpending,
-    totalExpenses
-) => {
+    export const generateRecommendations = async (userId) => {
 
-    return categorySpending
-        .map(category => ({
+        const data =
+            await collectFinancialData(userId);
 
-            category: category.category,
+        const analysis =
+            runAnalyzers(data);
 
-            amount: Number(category.total_spent),
+        const financialHealth =
+            calculateFinancialHealthScore(
+                analysis.metrics
+            );
 
-            percentage: Number(
-                (
-                    Number(category.total_spent) /
-                    totalExpenses
-                ) * 100
-            ).toFixed(1)
+        const topCategories =
+            getTopExpenseCategories(
+                data.categorySpending,
+                Number(data.financialSummary.total_expenses)
+            );
 
-        }))
-        .sort(
-            (a, b) => b.amount - a.amount
-        )
-        .slice(0, 5);
+        const savingsOpportunities =
+            detectSavingsOpportunities(
+                topCategories
+            );
 
-};
-const runAnalyzers = (data) => {
+        const dashboardSummary =
+            generateDashboardSummary(
+                data.financialSummary,
+                data.forecast,
+                financialHealth,
+                topCategories
+            );
 
-    const forecastAnalysis =
-        analyzeForecast(
-            data.financialSummary,
-            data.forecast
-        );
+        return {
 
-    const disposableIncomeAnalysis =
-        analyzeDisposableIncome(
-            data.financialSummary
-        );
+            financialSummary:
+                data.financialSummary,
 
-    const categoryBudgetAnalysis =
-        analyzeCategoryBudgets(
-            data.categorySpending,
-            data.financialSummary
-        );
-
-    const monthlyTrendAnalysis =
-        analyzeMonthlyTrend(
-            data.monthlyTrend
-        );
-
-    return {
-
-        recommendations: [
-
-            ...forecastAnalysis.recommendations,
-
-            ...disposableIncomeAnalysis.recommendations,
-
-            ...categoryBudgetAnalysis.recommendations,
-
-            ...monthlyTrendAnalysis.recommendations
-
-        ],
-
-        metrics: {
-
-            forecast:
-                forecastAnalysis.metrics,
-
-            disposableIncome:
-                disposableIncomeAnalysis.metrics,
-
-            categoryBudgets:
-                categoryBudgetAnalysis.metrics,
+            categorySpending:
+                data.categorySpending,
 
             monthlyTrend:
-                monthlyTrendAnalysis.metrics
+                data.monthlyTrend,
 
-        }
+            forecast:
+                data.forecast,
 
-    };
+            recommendations:
+                analysis.recommendations,
 
-};
+            metrics:
+                analysis.metrics,
 
-export const generateRecommendations = async (userId) => {
-
-    const data =
-        await collectFinancialData(userId);
-
-    const analysis =
-        runAnalyzers(data);
-
-    const financialHealth =
-        calculateFinancialHealthScore(
-            analysis.metrics
-        );
-
-    const topCategories =
-        getTopExpenseCategories(
-            data.categorySpending,
-            Number(data.financialSummary.total_expenses)
-        );
-
-    const savingsOpportunities =
-        detectSavingsOpportunities(
-            topCategories
-        );
-
-    const dashboardSummary =
-        generateDashboardSummary(
-            data.financialSummary,
-            data.forecast,
             financialHealth,
-            topCategories
-        );
 
-    return {
+            topCategories,
 
-        financialSummary:
-            data.financialSummary,
+            savingsOpportunities,
 
-        categorySpending:
-            data.categorySpending,
+            dashboardSummary
 
-        monthlyTrend:
-            data.monthlyTrend,
-
-        forecast:
-            data.forecast,
-
-        recommendations:
-            analysis.recommendations,
-
-        metrics:
-            analysis.metrics,
-
-        financialHealth,
-
-        topCategories,
-
-        savingsOpportunities,
-
-        dashboardSummary
+        };
 
     };
-
-};

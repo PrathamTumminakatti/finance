@@ -7,10 +7,16 @@ import Forecast from "./pages/Forecast";
 import Recommendations from "./pages/Recommendations";
 import FinancialHealth from "./pages/FinancialHealth";
 import Profile from "./pages/Profile";
+import Login from "./pages/Login";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import Register from "./pages/Register";
 
 function App() {
+
     return (
+
         <BrowserRouter>
+
             <Routes>
 
                 <Route
@@ -19,43 +25,83 @@ function App() {
                 />
 
                 <Route
+                    path="/login"
+                    element={<Login />}
+                />
+
+                <Route
                     path="/dashboard"
-                    element={<Dashboard />}
+                    element={
+                        <ProtectedRoute>
+                            <Dashboard />
+                        </ProtectedRoute>
+                    }
                 />
 
                 <Route
                     path="/transactions"
-                    element={<Transactions />}
+                    element={
+                        <ProtectedRoute>
+                            <Transactions />
+                        </ProtectedRoute>
+                    }
                 />
 
                 <Route
                     path="/analytics"
-                    element={<Analytics />}
+                    element={
+                        <ProtectedRoute>
+                            <Analytics />
+                        </ProtectedRoute>
+                    }
                 />
 
                 <Route
                     path="/forecast"
-                    element={<Forecast />}
+                    element={
+                        <ProtectedRoute>
+                            <Forecast />
+                        </ProtectedRoute>
+                    }
                 />
 
                 <Route
                     path="/recommendations"
-                    element={<Recommendations />}
+                    element={
+                        <ProtectedRoute>
+                            <Recommendations />
+                        </ProtectedRoute>
+                    }
                 />
 
                 <Route
                     path="/financial-health"
-                    element={<FinancialHealth />}
+                    element={
+                        <ProtectedRoute>
+                            <FinancialHealth />
+                        </ProtectedRoute>
+                    }
                 />
 
                 <Route
                     path="/profile"
-                    element={<Profile />}
+                    element={
+                        <ProtectedRoute>
+                            <Profile />
+                        </ProtectedRoute>
+                    }
                 />
+                <Route
+    path="/register"
+    element={<Register />}
+/>
 
             </Routes>
+
         </BrowserRouter>
+
     );
+
 }
 
 export default App;

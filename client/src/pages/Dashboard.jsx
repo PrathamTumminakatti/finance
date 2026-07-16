@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import MainLayout from "../components/layout/MainLayout";
 
 import { getRecommendations } from "../services/recommendationService";
+import { useAuth } from "../context/AuthContext";
 
 import SummarySection from "../components/dashboard/SummarySection";
 import RecommendationSection from "../components/dashboard/RecommendationSection";
@@ -23,17 +24,19 @@ function Dashboard() {
 
     const [error, setError] = useState("");
 
+    const { user } = useAuth();
+
     useEffect(() => {
+
+        if (!user) return;
 
         const fetchDashboard = async () => {
 
             try {
 
-                const data = await getRecommendations(
-                    "11111111-1111-1111-1111-111111111111"
-                );
+                setLoading(true);
 
-                console.log("Dashboard Data:", data);
+                const data = await getRecommendations(user.id);
 
                 setDashboardData(data);
 
@@ -53,7 +56,7 @@ function Dashboard() {
 
         fetchDashboard();
 
-    }, []);
+    }, [user]);
 
     return (
 
@@ -63,32 +66,28 @@ function Dashboard() {
 
                 <div className="dashboard-header">
 
-    <h1>Financial Dashboard</h1>
+                    <h1>Financial Dashboard</h1>
 
-    <p>
+                    <p>
 
-        Track your expenses, forecasts and AI insights
-        in one place.
+                        Track your expenses, forecasts and AI insights
+                        in one place.
 
-    </p>
+                    </p>
 
-</div>
+                </div>
 
                 {loading && <p>Loading...</p>}
 
                 {error && <p>{error}</p>}
 
-                {!loading && !error && (
+                {!loading && !error && dashboardData && (
 
                     <>
-
-                        {/* Summary Cards */}
 
                         <SummarySection
                             summary={dashboardData.dashboardSummary}
                         />
-
-                        {/* Charts */}
 
                         <div className="dashboard-row">
 
@@ -102,8 +101,6 @@ function Dashboard() {
 
                         </div>
 
-                        {/* AI Recommendation + Pie Chart */}
-
                         <div className="dashboard-row">
 
                             <RecommendationSection
@@ -116,8 +113,6 @@ function Dashboard() {
 
                         </div>
 
-                        {/* Detailed Category Table */}
-
                         <div className="dashboard-full">
 
                             <TopCategoriesSection
@@ -125,8 +120,6 @@ function Dashboard() {
                             />
 
                         </div>
-
-                        {/* Savings Opportunities */}
 
                         <div className="dashboard-full">
 

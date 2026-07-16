@@ -1,0 +1,70 @@
+.forecast-container{
+
+    padding:30px;
+
+}
+
+.forecast-container .summary-card{
+
+    background:white;
+
+    padding:25px;
+
+    border-radius:12px;
+
+    margin-bottom:30px;
+
+    box-shadow:0 3px 10px rgba(0,0,0,.08);
+
+}
+.forecast-summary{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    gap:30px;
+
+    flex-wrap:wrap;
+
+}
+
+.forecast-summary h1{
+
+    font-size:34px;
+
+    margin-top:10px;
+
+    color:#2563eb;
+
+}
+
+.forecast-summary h2{
+
+    font-size:28px;
+
+    margin-top:10px;
+
+}
+
+.forecast-summary h3{
+
+    color:#6b7280;
+
+    margin-bottom:10px;
+
+}
+
+@media(max-width:768px){
+
+    .forecast-summary{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+    }
+
+}

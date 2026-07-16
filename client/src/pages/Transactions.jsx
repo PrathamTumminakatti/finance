@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useState, useCallback } from "react";
 
 import MainLayout from "../components/layout/MainLayout";
 
@@ -7,34 +8,36 @@ import TransactionForm from "../components/transactions/TransactionForm";
 import TransactionTable from "../components/transactions/TransactionTable";
 
 import { getTransactions } from "../services/transactionService";
+import { useAuth } from "../context/AuthContext";
 
 import "../components/transactions/styles/Transactions.css";
+
 function Transactions() {
 
     const [transactions, setTransactions] = useState([]);
-
     const [searchTerm, setSearchTerm] = useState("");
-
     const [selectedCategory, setSelectedCategory] = useState("All");
-
     const [selectedDate, setSelectedDate] = useState("");
-
     const [sortBy, setSortBy] = useState("date-desc");
     const [currentPage, setCurrentPage] = useState(1);
 
     const transactionsPerPage = 10;
 
     const [loading, setLoading] = useState(true);
-
     const [error, setError] = useState("");
 
-    const userId = "11111111-1111-1111-1111-111111111111";
+    const { user } = useAuth();
 
-    const fetchTransactions = async () => {
+    const fetchTransactions = useCallback(async () => {
+
+        if (!user) return;
 
         try {
 
-            const data = await getTransactions(userId);
+            setLoading(true);
+            setError("");
+
+            const data = await getTransactions(user.id);
 
             setTransactions(data);
 
@@ -54,28 +57,29 @@ function Transactions() {
 
         }
 
-    };
+    }, [user]);
 
     useEffect(() => {
 
         fetchTransactions();
 
-    }, []);
+    }, [fetchTransactions]);
+
     useEffect(() => {
 
-    setCurrentPage(1);
+        setCurrentPage(1);
 
-}, [
+    }, [
 
-    searchTerm,
+        searchTerm,
 
-    selectedCategory,
+        selectedCategory,
 
-    selectedDate,
+        selectedDate,
 
-    sortBy
+        sortBy
 
-]);
+    ]);
 
     const filteredTransactions = transactions.filter((transaction) => {
 
@@ -109,9 +113,7 @@ function Transactions() {
 
         const matchesDate =
 
-            !selectedDate
-
-            ||
+            !selectedDate ||
 
             localDate === selectedDate;
 
@@ -129,41 +131,42 @@ function Transactions() {
 
     const sortedTransactions = [...filteredTransactions].sort((a, b) => {
 
-    switch (sortBy) {
+        switch (sortBy) {
 
-        case "date-asc":
-            return new Date(a.transaction_date) - new Date(b.transaction_date);
+            case "date-asc":
+                return new Date(a.transaction_date) - new Date(b.transaction_date);
 
-        case "amount-desc":
-            return Number(b.amount) - Number(a.amount);
+            case "amount-desc":
+                return Number(b.amount) - Number(a.amount);
 
-        case "amount-asc":
-            return Number(a.amount) - Number(b.amount);
+            case "amount-asc":
+                return Number(a.amount) - Number(b.amount);
 
-        case "category":
-            return a.category.localeCompare(b.category);
+            case "category":
+                return a.category.localeCompare(b.category);
 
-        default:
-            return new Date(b.transaction_date) - new Date(a.transaction_date);
+            default:
+                return new Date(b.transaction_date) - new Date(a.transaction_date);
 
-    }
+        }
 
-});
-const indexOfLastTransaction =
-    currentPage * transactionsPerPage;
+    });
 
-const indexOfFirstTransaction =
-    indexOfLastTransaction - transactionsPerPage;
+    const indexOfLastTransaction =
+        currentPage * transactionsPerPage;
 
-const currentTransactions =
-    sortedTransactions.slice(
-        indexOfFirstTransaction,
-        indexOfLastTransaction
+    const indexOfFirstTransaction =
+        indexOfLastTransaction - transactionsPerPage;
+
+    const currentTransactions =
+        sortedTransactions.slice(
+            indexOfFirstTransaction,
+            indexOfLastTransaction
+        );
+
+    const totalPages = Math.ceil(
+        sortedTransactions.length / transactionsPerPage
     );
-
-const totalPages = Math.ceil(
-    sortedTransactions.length / transactionsPerPage
-);
 
     return (
 
@@ -201,13 +204,17 @@ const totalPages = Math.ceil(
 
                 />
 
-                <TransactionForm
+                {user && (
 
-                    userId={userId}
+                    <TransactionForm
 
-                    onTransactionAdded={fetchTransactions}
+                        userId={user.id}
 
-                />
+                        onTransactionAdded={fetchTransactions}
+
+                    />
+
+                )}
 
                 {
 
@@ -222,77 +229,86 @@ const totalPages = Math.ceil(
                     ) : (
 
                         <TransactionTable
-    transactions={currentTransactions}
-/>
 
+                            transactions={currentTransactions}
+
+                        />
 
                     )
 
                 }
-                
-                <div className="pagination">
 
-    <button
+                {
 
-        onClick={() =>
-            setCurrentPage(currentPage - 1)
-        }
+                    totalPages > 1 && (
 
-        disabled={currentPage === 1}
+                        <div className="pagination">
 
-    >
+                            <button
 
-        Previous
+                                onClick={() =>
+                                    setCurrentPage(currentPage - 1)
+                                }
 
-    </button>
+                                disabled={currentPage === 1}
 
-    {
+                            >
 
-        Array.from(
-            { length: totalPages },
-            (_, index) => (
+                                Previous
 
-                <button
+                            </button>
 
-                    key={index + 1}
+                            {
 
-                    className={
-                        currentPage === index + 1
-                            ? "active-page"
-                            : ""
-                    }
+                                Array.from(
+                                    { length: totalPages },
+                                    (_, index) => (
 
-                    onClick={() =>
-                        setCurrentPage(index + 1)
-                    }
+                                        <button
 
-                >
+                                            key={index + 1}
 
-                    {index + 1}
+                                            className={
+                                                currentPage === index + 1
+                                                    ? "active-page"
+                                                    : ""
+                                            }
 
-                </button>
+                                            onClick={() =>
+                                                setCurrentPage(index + 1)
+                                            }
 
-            )
+                                        >
 
-        )
+                                            {index + 1}
 
-    }
+                                        </button>
 
-    <button
+                                    )
 
-        onClick={() =>
-            setCurrentPage(currentPage + 1)
-        }
+                                )
 
-        disabled={currentPage === totalPages}
+                            }
 
-    >
+                            <button
 
-        Next
+                                onClick={() =>
+                                    setCurrentPage(currentPage + 1)
+                                }
 
-    </button>
+                                disabled={currentPage === totalPages}
 
-</div>
+                            >
+
+                                Next
+
+                            </button>
+
+                        </div>
+
+                    )
+
+                }
 
             </div>
 

@@ -9,6 +9,8 @@ import ExpenseTrendChart from "../components/charts/ExpenseTrendChart";
 import CategoryPieChart from "../components/charts/CategoryPieChart";
 import AnalyticsSummary from "../components/analytics/AnalyticsSummary";
 import { getAnalytics } from "../services/analyticsService";
+import { useAuth } from "../context/AuthContext";
+
 
 import "../components/analytics/styles/Analytics.css";
 
@@ -17,8 +19,9 @@ function Analytics() {
     const [analytics, setAnalytics] = useState(null);
 
     const [loading, setLoading] = useState(true);
-
+    const { user } = useAuth();
     const [error, setError] = useState("");
+    
 
     useEffect(() => {
 
@@ -26,9 +29,8 @@ function Analytics() {
 
             try {
 
-                const data = await getAnalytics(
-                    "11111111-1111-1111-1111-111111111111"
-                );
+                const data = await getAnalytics(user.id)
+                 
 
                 console.log(data);
 
@@ -54,7 +56,7 @@ function Analytics() {
 
         fetchAnalytics();
 
-    }, []);
+    }, [user]);
 
     return (
 
