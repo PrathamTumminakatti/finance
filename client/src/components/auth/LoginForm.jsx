@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { login as loginService } from "../../services/authService";
 import { useAuth } from "../../context/AuthContext";
+import { Link } from "react-router-dom";
 
 function LoginForm() {
 
@@ -114,29 +115,17 @@ function LoginForm() {
 
             />
 
-            <button
+           <button
+    type="submit"
+    disabled={loading}
+>
+    {loading ? "Logging in..." : "Login"}
+</button>
 
-                type="submit"
-
-                disabled={loading}
-
-            >
-
-                {
-
-                    loading
-
-                        ?
-
-                        "Logging in..."
-
-                        :
-
-                        "Login"
-
-                }
-
-            </button>
+<p>
+    Don't have an account?{" "}
+    <Link to="/register">Register</Link>
+</p>
 
         </form>
 
