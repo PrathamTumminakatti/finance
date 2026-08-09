@@ -26,9 +26,29 @@ ChartJS.register(
 function ForecastChart({ forecast }) {
 
     const historicalData =
-    forecast?.forecast?.historical_data ?? [];
+        forecast?.forecast?.historical_data ?? [];
+
     const predictedExpense =
-    forecast?.forecast?.predicted_expense ?? 0;
+        forecast?.forecast?.predicted_expense ?? 0;
+
+    if (historicalData.length === 0) {
+
+        return (
+
+            <div className="chart-card">
+
+                <h2>Expense Forecast</h2>
+
+                <p>
+                    Not enough transaction history to generate
+                    an expense forecast yet.
+                </p>
+
+            </div>
+
+        );
+
+    }
 
     const labels = historicalData.map((item) =>
         new Date(item.month).toLocaleString("default", {
@@ -43,7 +63,9 @@ function ForecastChart({ forecast }) {
 
     const nextMonth = new Date(lastMonth);
 
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    nextMonth.setMonth(
+        nextMonth.getMonth() + 1
+    );
 
     labels.push(
         nextMonth.toLocaleString("default", {
@@ -59,8 +81,11 @@ function ForecastChart({ forecast }) {
     data.push(predictedExpense);
 
     const chartData = {
+
         labels,
+
         datasets: [
+
             {
                 label: "Expense Forecast",
 
@@ -71,21 +96,32 @@ function ForecastChart({ forecast }) {
                 backgroundColor: "#7c3aed",
 
                 pointRadius: (context) => {
-                    return context.dataIndex === data.length - 1 ? 8 : 4;
+
+                    return context.dataIndex ===
+                        data.length - 1
+                        ? 8
+                        : 4;
+
                 },
 
                 pointBackgroundColor: (context) => {
-                    return context.dataIndex === data.length - 1
+
+                    return context.dataIndex ===
+                        data.length - 1
                         ? "#dc2626"
                         : "#7c3aed";
+
                 },
 
                 tension: 0.3
             }
+
         ]
+
     };
 
     return (
+
         <div className="chart-card">
 
             <h2>Expense Forecast</h2>
@@ -99,7 +135,9 @@ function ForecastChart({ forecast }) {
             />
 
         </div>
+
     );
+
 }
 
 export default ForecastChart;
