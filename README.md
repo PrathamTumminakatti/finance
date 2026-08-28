@@ -332,20 +332,37 @@ Make sure the following are installed:
 
 * Node.js
 * npm
+* Python 3.x
+* pip
 * PostgreSQL
-* pgAdmin or another PostgreSQL management tool
+* pgAdmin
 * Git
 
-### Clone the Repository
+---
+
+### 7.1 Clone the Repository
 
 ```bash
 git clone <YOUR_GITHUB_REPOSITORY_URL>
 cd ai-finance
 ```
 
-### Backend Setup
+---
 
-Navigate to the server directory:
+### 7.2 Database Setup
+
+1. Install and start PostgreSQL.
+2. Create a database for the application.
+3. Open the project database using pgAdmin.
+4. Create the required database tables/schema.
+5. Configure the database connection used by the backend.
+6. Ensure the database is running before starting the application.
+
+---
+
+### 7.3 Backend Setup
+
+Navigate to the backend:
 
 ```bash
 cd server
@@ -357,7 +374,7 @@ Install dependencies:
 npm install
 ```
 
-Configure the backend environment variables according to the project's database and authentication configuration.
+Configure the backend environment variables.
 
 Example:
 
@@ -367,7 +384,7 @@ DATABASE_URL=your_postgresql_connection_string
 JWT_SECRET=your_jwt_secret
 ```
 
-Use the actual variable names required by the project configuration.
+Use the exact environment-variable names defined by the project.
 
 Start the backend:
 
@@ -375,9 +392,65 @@ Start the backend:
 npm run dev
 ```
 
-The backend should start using the configured port.
+---
 
-### Frontend Setup
+### 7.4 ML Service Setup
+
+The project contains a separate **ML service** responsible for the machine-learning/time-series forecasting functionality.
+
+Navigate to the ML service directory:
+
+```bash
+cd ml-service
+```
+
+Create a Python virtual environment:
+
+### Windows
+
+```bash
+python -m venv venv
+```
+
+Activate it:
+
+```bash
+venv\Scripts\activate
+```
+
+### macOS / Linux
+
+```bash
+python3 -m venv venv
+```
+
+Activate it:
+
+```bash
+source venv/bin/activate
+```
+
+Install the required Python dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Start the ML service using the project's configured entry point.
+
+For example, if the service uses `app.py`:
+
+```bash
+python app.py
+```
+
+If the project uses another entry file or startup command, use that command instead.
+
+The ML service should be running before using the application's expense forecasting functionality.
+
+---
+
+### 7.5 Frontend Setup
 
 Open another terminal and navigate to the client:
 
@@ -397,7 +470,73 @@ Start the frontend:
 npm run dev
 ```
 
-Open the local frontend URL displayed by the development server.
+Open the local URL displayed by the development server.
+
+---
+
+### 7.6 Running the Complete Application
+
+The application consists of three main services:
+
+```text
+Frontend
+   │
+   │ REST API
+   ▼
+Node.js Backend
+   │
+   ├──────────────► PostgreSQL
+   │
+   └──────────────► ML Service
+                         │
+                         ▼
+                  Expense Forecast
+```
+
+For local development, keep the following services running:
+
+**Terminal 1 — Backend**
+
+```bash
+cd server
+npm run dev
+```
+
+**Terminal 2 — ML Service**
+
+```bash
+cd ml-service
+# activate virtual environment first
+python app.py
+```
+
+**Terminal 3 — Frontend**
+
+```bash
+cd client
+npm run dev
+```
+
+The exact ML-service startup command should match the entry point configured in the project.
+
+---
+
+### 7.7 Environment Configuration
+
+Do not commit sensitive configuration to the public repository.
+
+Examples of values that should remain private:
+
+```text
+Database passwords
+JWT secrets
+API keys
+Production credentials
+Private service URLs
+```
+
+Use `.env` files locally and provide a `.env.example` file in the repository when appropriate.
+
 
 ### Database Setup
 
